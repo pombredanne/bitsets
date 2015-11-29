@@ -17,116 +17,8 @@ __new__ = long_int.__new__
 class MemberBits(with_metaclass(meta.MemberBitsMeta, long_int)):
     """Subsets of a predefined domain as rank in colexicographical order.
 
-    >>> Ints = MemberBits._make_subclass('Ints', (1, 2, 3, 4, 5, 6))
-
-    >>> Ints  # doctest: +ELLIPSIS
-    <class bitsets.meta.bitset('Ints', (1, 2, 3, 4, 5, 6), 0x..., MemberBits, None, None)>
-
-    >>> Ints('100011')
-    Ints('100011')
-
-
-    >>> Ints.frommembers([1, 5, 6])
-    Ints('100011')
-
-    >>> Ints.frombools([True, '', None, 0, 'yes', 5])
-    Ints('100011')
-
-    >>> Ints.frombits('100011')
-    Ints('100011')
-
-    >>> Ints.fromint(49)
-    Ints('100011')
-
-
-    >>> Ints('100011').members()
-    (1, 5, 6)
-
-    >>> Ints('100011').bools()
-    (True, False, False, False, True, True)
-
-    >>> Ints('100011').bits()
-    '100011'
-
-    >>> print(Ints('100011').int)
-    49
-
-
-    >>> list(Ints('100011').atoms())
-    [Ints('100000'), Ints('000010'), Ints('000001')]
-
-    >>> list(Ints('100011').inatoms())
-    [Ints('010000'), Ints('001000'), Ints('000100')]
-
-
-    >>> triples = [i for i in Ints.supremum.powerset() if i.count() == 3]
-
-    >>> ['%d%d%d' % t.members() for t in triples]  # doctest: +NORMALIZE_WHITESPACE
-    ['123', '124', '125', '126',
-            '134', '135', '136',
-                   '145', '146',
-                          '156',
-            '234', '235', '236',
-                   '245', '246',
-                          '256',
-                   '345', '346',
-                          '356',
-                          '456']
-
-    >>> ['%d%d%d' % t.members() for t in sorted(triples)]  # doctest: +NORMALIZE_WHITESPACE
-    ['123',
-     '124', '134', '234',
-     '125', '135', '235', '145', '245', '345',
-     '126', '136', '236', '146', '246', '346', '156', '256', '356', '456']
-
-
-    >>> uptotwo = [i for i in Ints.supremum.powerset() if i.count() <= 2]
-
-    >>> [''.join(map(str, u.members())) for u in
-    ... sorted(uptotwo, key=lambda u: u.shortlex())]  # doctest: +NORMALIZE_WHITESPACE
-    ['',  '1',  '2',  '3',  '4',  '5',  '6',
-               '12', '13', '14', '15', '16',
-                     '23', '24', '25', '26',
-                           '34', '35', '36',
-                                 '45', '46',
-                                       '56']
-
-    >>> [''.join(map(str, u.members())) for u in
-    ... sorted(uptotwo, key=lambda u: u.shortcolex())]  # doctest: +NORMALIZE_WHITESPACE
-    ['',  '1',  '2',  '3',  '4',  '5',  '6',
-          '12',
-          '13', '23',
-          '14', '24', '34',
-          '15', '25', '35', '45',
-          '16', '26', '36', '46', '56']
-
-    >>> [''.join(map(str, u.members())) for u in
-    ... sorted(uptotwo, key=lambda u: u.longlex())]  # doctest: +NORMALIZE_WHITESPACE
-    ['12', '13', '14', '15', '16',
-           '23', '24', '25', '26',
-                 '34', '35', '36',
-                       '45', '46',
-                             '56',
-     '1',  '2',  '3',  '4',  '5',  '6',  '']
-
-    >>> [''.join(map(str, u.members())) for u in
-    ... sorted(uptotwo, key=lambda u: u.longcolex())]  # doctest: +NORMALIZE_WHITESPACE
-    ['12',
-     '13', '23',
-     '14', '24', '34',
-     '15', '25', '35', '45',
-     '16', '26', '36', '46', '56',
-     '1',  '2',  '3',  '4',  '5',  '6',  '']
-
-
-    >>> Ints('100011').count()
-    3
-
-    >>> Ints('111111').all() and not Ints('001010').all()
-    True
-
-    >>> Ints('100000').any() and not Ints('000000').any()
-    True
+    Args:
+        bits: String with the binary membership representation.
     """
 
     _indexes = integers.indexes
@@ -149,18 +41,26 @@ class MemberBits(with_metaclass(meta.MemberBitsMeta, long_int)):
     def frombits(cls, bits='0'):
         """Create a set from binary string."""
         if len(bits) > cls._len:
-            raise ValueError('%r: too many bits.' % bits)
+            raise ValueError('too many bits %r' % (bits,))
         return cls.fromint(bits[::-1], 2)
 
     __new__ = frombits.__func__
 
     def __reduce__(self):
-        return __new__, (self.__class__, self.real)
+        return __new__, (self.__class__, self._int)
 
-    int = long_int.real
+    def copy(self):
+        """Return the set unchanged (as its is immutable)."""
+        return self
 
-    def members(self):
-        """Return the set members tuple."""
+    int = _int = long_int.real
+
+    iter_set = integers.indexes
+
+    def members(self, as_set=False):
+        """Return the set members tuple/frozenset."""
+        if as_set:
+            return frozenset(map(self._members.__getitem__, self._indexes()))
         return tuple(map(self._members.__getitem__, self._indexes()))
 
     def bools(self):
@@ -194,8 +94,7 @@ class MemberBits(with_metaclass(meta.MemberBitsMeta, long_int)):
         else:
             if self | start != self:
                 raise ValueError('%r is no subset of %r' % (start, self))
-            other = self.fromint(self & ~start)
-            other = other.atoms()
+            other = self.fromint(self & ~start).atoms()
         return map(self.frombitset, combos.shortlex(start, list(other)))
 
     def shortlex(self):
@@ -208,22 +107,24 @@ class MemberBits(with_metaclass(meta.MemberBitsMeta, long_int)):
 
     def shortcolex(self):
         """Return sort key for short colexicographical order."""
-        return bin(self).count('1'), self.int
+        return bin(self).count('1'), self._int
 
     def longcolex(self):
         """Return sort key for long colexicographical order."""
-        return -bin(self).count('1'), self.int
+        return -bin(self).count('1'), self._int
 
-    def count(self):
-        """Returns the number of items in the set (cardinality)."""
-        return bin(self).count('1')
+    def count(self, value=True):
+        """Returns the number of present/absent members."""
+        if value not in (True, False):
+            raise ValueError('can only count True or False, not %r' % (value,))
+        return bin(self)[2:].count('01'[value])
 
     def all(self):
         """Return True iff the set contains all domain items."""
         return self == self.supremum
 
     def any(self):
-        """Return True iff the set contains at least one items."""
+        """Return True iff the set contains at least one item."""
         return self != self.infimum
 
 
@@ -231,66 +132,30 @@ class MemberBits(with_metaclass(meta.MemberBitsMeta, long_int)):
 class BitSet(MemberBits):
     """Ordered container of unique elements from a predefined domain.
 
-    >>> Nums = BitSet._make_subclass('Nums', (1, 2, 3, 4, 5, 6))
-
-    >>> Nums  # doctest: +ELLIPSIS
-    <class bitsets.meta.bitset('Nums', (1, 2, 3, 4, 5, 6), 0x..., BitSet, None, None)>
-
-    >>> Nums([1, 2, 3])
-    Nums([1, 2, 3])
-
-
-    >>> list(Nums([1, 2, 3]))
-    [1, 2, 3]
-
-    >>> 1 in Nums([1, 2]) and 2 not in Nums([1]) and 1 not in Nums()
-    True
-
-    >>> -1 in Nums()
-    Traceback (most recent call last):
-    ...
-    KeyError: -1
-
-
-    >>> Nums([1]).issubset(Nums([1, 2])) and not Nums([1]).issubset(Nums())
-    True
-
-    >>> Nums([1, 2]).issuperset(Nums([1])) and not Nums().issuperset(Nums([1]))
-    True
-
-    >>> Nums([1, 2]).isdisjoint(Nums([3, 4])) and not Nums([1]).isdisjoint(Nums([1]))
-    True
-
-
-    >>> Nums([1, 2]).intersection(Nums([2, 3]))
-    Nums([2])
-
-    >>> Nums([1, 2]).union(Nums([2, 3]))
-    Nums([1, 2, 3])
-
-    >>> Nums([1, 2]).difference(Nums([2, 3]))
-    Nums([1])
-
-    >>> Nums([1, 2]).symmetric_difference(Nums([2, 3]))
-    Nums([1, 3])
-
-
-    >>> Nums([1, 2]).complement()
-    Nums([3, 4, 5, 6])
+    Args:
+        members: Iterable of domain members.
+    Raises:
+        KeyError: if a member is not in the domain of the set.
     """
 
     __new__ = MemberBits.frommembers.__func__
 
     __bool__ = get_unbound_func(MemberBits.any)
 
-    __len__ = get_unbound_func(MemberBits.count)
+    def __len__(self):
+        """Return the number of items in the set (cardinality)."""
+        return bin(self).count('1')
 
     def __iter__(self):
         """Iterate over the set members."""
         return map(self._members.__getitem__, self._indexes())
 
     def __contains__(self, member):
-        """Set membership."""
+        """Set membership.
+
+        Raises:
+            KeyError: if member is not in the domain of the set.
+        """
         return self._map[member] & self
 
     def __repr__(self):

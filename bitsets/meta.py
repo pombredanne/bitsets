@@ -2,11 +2,12 @@
 
 """Dynamic bitset class creation and retrieval."""
 
-from ._compat import integer_types, zip, filter, filterfalse, copyreg
+from ._compat import integer_types, zip, filter, filterfalse, register_reduce
 
 __all__ = ['MemberBitsMeta', 'SeriesMeta']
 
 
+@register_reduce
 class MemberBitsMeta(type):
 
     __registry = {}
@@ -46,7 +47,7 @@ class MemberBitsMeta(type):
         self._len = len(self._members)
 
         self._atoms = tuple(self.fromint(1 << i) for i in range(self._len))
-        self._map = {m: i for m, i in zip(self._members, self._atoms)}
+        self._map = dict(zip(self._members, self._atoms))
 
         self.infimum = self.fromint(0)  # all zeros
         self.supremum = self.fromint((1 << self._len) - 1)  # all ones
@@ -91,22 +92,20 @@ class MemberBitsMeta(type):
 
     def reduce_and(self, bitsets):
         """Generalized intersection."""
-        inters = self.frombitset(self.supremum)
+        inters = self.supremum.copy()
         for b in bitsets:
             inters &= b
         return self.frombitset(inters)
 
     def reduce_or(self, bitsets):
         """Generalized union."""
-        union = self.frombitset(self.infimum)
+        union = self.infimum.copy()
         for b in bitsets:
             union |= b
         return self.frombitset(union)
 
 
-copyreg.pickle(MemberBitsMeta, MemberBitsMeta.__reduce__)
-
-
+@register_reduce
 class SeriesMeta(type):
 
     def _make_subclass(self, name, cls):
@@ -137,9 +136,6 @@ class SeriesMeta(type):
         return bitset_series, (bs.__name__, bs._members, bs._id, bs.__base__,
             bs.List.__base__ if hasattr(bs, 'List') else None,
             bs.Tuple.__base__ if hasattr(bs, 'Tuple') else None)
-
-
-copyreg.pickle(SeriesMeta, SeriesMeta.__reduce__)
 
 
 def bitset(name, members, id, basecls, listcls, tuplecls):

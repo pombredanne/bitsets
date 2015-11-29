@@ -10,65 +10,7 @@ __all__ = ['List', 'Tuple']
 
 
 class Series(with_metaclass(meta.SeriesMeta, object)):
-    """Bitset sequence.
-
-    >>> from bitsets import bases
-
-    >>> Nums = bases.BitSet._make_subclass('Nums', (1, 2, 3, 4, 5, 6), listcls=List, tuplecls=Tuple)
-
-    >>> Nums.List  # doctest: +ELLIPSIS
-    <class bitsets.meta.bitset_list('Nums', (1, 2, 3, 4, 5, 6), 0x..., BitSet, List, Tuple)>
-
-    >>> Nums.Tuple  # doctest: +ELLIPSIS
-    <class bitsets.meta.bitset_tuple('Nums', (1, 2, 3, 4, 5, 6), 0x..., BitSet, List, Tuple)>
-
-    >>> Nums.List('101000','110000')
-    NumsList('101000', '110000')
-
-    >>> Nums.Tuple('101000','110000')
-    NumsTuple('101000', '110000')
-
-
-    >>> issubclass(Nums.List, list) and issubclass(Nums.Tuple, tuple)
-    True
-
-    >>> Nums.List.frombitsets([]), Nums.Tuple.frombitsets([])
-    (NumsList(), NumsTuple())
-
-
-    >>> Nums.List.frommembers([(1, 3), (1, 2)])
-    NumsList('101000', '110000')
-
-    >>> Nums.List.frombools([(True, False, True), (True, True, False)])
-    NumsList('101000', '110000')
-
-    >>> Nums.List.frombits(['101000', '110000'])
-    NumsList('101000', '110000')
-
-    >>> Nums.List.fromints([5, 3])
-    NumsList('101000', '110000')
-
-
-    >>> Nums.List('101000', '110000').members()
-    [(1, 3), (1, 2)]
-
-    >>> Nums.List('101000', '110000').bools()  # doctest: +NORMALIZE_WHITESPACE
-    [(True, False, True, False, False, False),
-     (True, True, False, False, False, False)]
-
-    >>> Nums.List('101000', '110000').bits()
-    ['101000', '110000']
-
-    >>> [str(i) for i in Nums.List('101000', '110000').ints()]
-    ['5', '3']
-
-
-    >>> Nums.List('101000', '110000').reduce_and()
-    Nums([1])
-
-    >>> Nums.List('101000', '110000').reduce_or()
-    Nums([1, 2, 3])
-    """
+    """Bitset sequence."""
 
     __slots__ = ()
 
@@ -92,9 +34,9 @@ class Series(with_metaclass(meta.SeriesMeta, object)):
         """Series from integer rank arguments."""
         return cls.frombitsets(map(cls.BitSet.fromint, ints))
 
-    def members(self):
-        """Return the series as list of set member tuples."""
-        return [b.members() for b in self]
+    def members(self, as_set=False):
+        """Return the series as list of set member tuples/frozensets."""
+        return [b.members(as_set) for b in self]
 
     def bools(self):
         """Return the series as list of boolean set membership sequences."""
@@ -112,6 +54,11 @@ class Series(with_metaclass(meta.SeriesMeta, object)):
         items = ', '.join('%r' % b.bits() for b in self)
         return '%s(%s)' % (self.__class__.__name__, items)
 
+    def index_sets(self, as_set=False):
+        """Return the series as list of index set tuples."""
+        indexes = frozenset if as_set else tuple
+        return [indexes(b.iter_set()) for b in self]
+
     def reduce_and(self):
         """Return the intersection of all series elements."""
         return self.BitSet.reduce_and(self)
@@ -122,7 +69,11 @@ class Series(with_metaclass(meta.SeriesMeta, object)):
 
 
 class List(Series, list):
-    """Mutable bitset sequence."""
+    """Mutable bitset sequence.
+
+    Args:
+        *bits(str): Strings with the binary membership representation.
+    """
 
     __slots__ = ()
 
@@ -141,7 +92,11 @@ class List(Series, list):
 
 
 class Tuple(Series, tuple):
-    """Immutable bitset sequence."""
+    """Immutable bitset sequence.
+
+    Args:
+        *bits(str): Strings with the binary membership representation.
+    """
 
     __slots__ = ()
 

@@ -1,5 +1,65 @@
-Bitsets Changelog
-=================
+Changelog
+=========
+
+
+Version 0.7.10 (in development)
+-------------------------------
+
+
+
+
+Version 0.7.9
+-------------
+
+Raise an error if bitset members have duplicates.
+
+Extended and improved documentation, added Sphinx-based API reference.
+
+Improved unittests.
+
+
+Version 0.7.8
+-------------
+
+Added integers.n() and integers.rank().
+
+Make iter_set() available on series as index_sets() method.
+
+
+Version 0.7.7
+-------------
+
+Made indexes() available on bitsets as iter_set() method.
+
+Added transform module providing additional integer (un)packing tools.
+
+
+Version 0.7.6
+-------------
+
+Added optional as_set parameter to members() method returning a frozenset.
+
+
+Version 0.7.5
+-------------
+
+Added optional boolean value argument to count() method.
+
+Added integers.bit_mask().
+
+
+Version 0.7.4
+-------------
+
+Support domains of just one element (minimum was two).
+
+
+Version 0.7.3
+-------------
+
+Added integers.compress().
+
+Added copy() method (improve set compatibility).
 
 
 Version 0.7.2

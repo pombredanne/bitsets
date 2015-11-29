@@ -2,15 +2,15 @@
 
 """Bit manipulation for set rank and unrank."""
 
-from ._compat import map
-
 import string
 
-__all__ = ['indexes', 'reinverted', 'unrank']
+from ._compat import map
+
+__all__ = ['indexes', 'n', 'reinverted', 'rank', 'unrank', 'compress', 'bit_mask']
 
 
 def indexes(n):
-    """Yield indexes unranking n in colexicographical order.
+    """Yield index sets unranking n in colexicographical order.
 
     >>> [tuple(indexes(i)) for i in range(8)]
     [(), (0,), (1,), (0, 1), (2,), (0, 2), (1, 2), (0, 1, 2)]
@@ -21,6 +21,15 @@ def indexes(n):
             yield i
         i += 1
         n >>= 1
+
+
+def n(indexes):
+    """Return n ranking index sets in colexicographical order.
+
+    >>> [n(ind) for ind in ((), (0,), (1,), (0, 1), (2,))]
+    [0, 1, 2, 3, 4]
+    """
+    return sum(1 << i for i in indexes)
 
 
 def reinverted(n, r):
@@ -44,6 +53,19 @@ def reinverted(n, r):
     return result
 
 
+def rank(items, sequence=string.ascii_lowercase):
+    """Rank items from sequence in colexicographical order.
+
+    >>> [rank(i) for i in ('', 'a', 'b', 'ab', 'c')]
+    [0, 1, 2, 3, 4]
+
+    >>> rank('spam')
+    299009
+    """
+    items = set(items)
+    return sum(1 << i for i, s in enumerate(sequence) if s in items)
+
+
 def unrank(n, sequence=string.ascii_lowercase):
     """Unrank n from sequence in colexicographical order.
 
@@ -54,3 +76,26 @@ def unrank(n, sequence=string.ascii_lowercase):
     ['a', 'm', 'p', 's']
     """
     return list(map(sequence.__getitem__, indexes(n)))
+
+
+def compress(sequence, n):
+    """Filter sequence items unranking n in colexicographical order.
+
+    >>> list(compress(string.ascii_lowercase, 299009))
+    ['a', 'm', 'p', 's']
+    """
+    for s in sequence:
+        if n & 1:
+            yield s
+        n >>= 1
+        if not n:
+            return
+
+
+def bit_mask(n):
+    """Return an integer of n bits length with all bits set.
+
+    >>> bin(bit_mask(5))
+    '0b11111'
+    """
+    return (1 << n) - 1
