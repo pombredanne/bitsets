@@ -16,13 +16,13 @@ Download and install Graphviz_. Then install the Python interface
 
 .. code:: bash
 
-    $ pip install "graphviz>=0.3, <0.5"
+    $ pip install "graphviz>=0.3, <1.0"
 
 Make sure that the ``bin`` directory of Graphviz is on your system path.
 
 .. code:: python
 
-    >>> from bitsets import visualize
+    >>> from bitsets import bitset, visualize
     >>> Four = bitset('Four', (1, 2, 3, 4))
 
     >>> dot = visualize.bitset(Four)
@@ -41,7 +41,7 @@ Make sure that the ``bin`` directory of Graphviz is on your system path.
     			b3 -> b2
     ...
 
-.. image:: _static/hasse-bits.png
+.. image:: _static/hasse-bits.svg
     :align: center
 
 
@@ -65,7 +65,7 @@ Show members instead of bits:
     			b3 -> b2
     ...
 
-.. image:: _static/hasse-members.png
+.. image:: _static/hasse-members.svg
     :align: center
 
 Remember that the graphs have ``2 ** domain_size`` nodes.
@@ -171,6 +171,9 @@ Bitset classes, collection classes and their instances are **pickleable**:
 .. code:: python
 
     >>> import pickle
+
+    >>> PYTHONS = ('Chapman', 'Cleese', 'Gilliam', 'Idle', 'Jones', 'Palin')
+    >>> Pythons = bitset('Pythons', PYTHONS)
 
     >>> pickle.loads(pickle.dumps(Pythons)) is Pythons
     True
